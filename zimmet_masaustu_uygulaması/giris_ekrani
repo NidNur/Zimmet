@@ -1,0 +1,56 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+    public partial class girisekrani : System.Web.UI.Page
+    {
+        veritabani VeriTabani = new veritabani();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+ 
+        }
+      
+        protected void btn_giris_Click(object sender, EventArgs e)
+        {
+ 
+            if (txt_kullaniciadi.Text == "" || txt_sifre.Text == "")
+            {
+                Response.Write("<script>alert('Kullanıcı Adı veya Şifre Boş Bırakılamaz!');</script>");
+            }
+ 
+            else if (checkBox1.Checked)
+            {
+                bool adminVarMi = VeriTabani.DatabaseAdminGiris(txt_kullaniciadi.Text, VeriTabani.MD5Sifrele(txt_sifre.Text));
+                if (adminVarMi == true)
+                {
+                    Response.Redirect("adminpaneli.aspx");
+                }
+                else
+                {
+                    Response.Write("<script>alert('Kullanıcı Adı veya Şifre Hatalı');</script>");
+                }
+            }
+            else if (checkBox1.Checked == false)
+            {
+                bool kullaniciVarMi = VeriTabani.DatabaseKullaniciGiris(txt_kullaniciadi.Text, txt_sifre.Text);
+                if (kullaniciVarMi == true)
+                {
+                    Response.Redirect("zimmet.aspx");
+                }
+                else
+                {
+                    Response.Write("<script>alert('Kullanıcı Adı veya Şifre Hatalı');</script>");
+                }
+ 
+            }
+         
+            
+        }           
+    }
+}
+

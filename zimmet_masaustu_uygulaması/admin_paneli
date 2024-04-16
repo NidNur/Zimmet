@@ -1,0 +1,230 @@
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+    public partial class adminpaneli : System.Web.UI.Page
+    {
+        veritabani VeriTabani = new veritabani();
+ 
+        int i;
+        string[] combodizi;
+        string[] mailDizi;
+        int verisayici = 0;
+        int adminSayici = 0;
+        int a;
+        string admin;
+        SmtpClient sc = new SmtpClient();
+        public void sendMail(String baslik, String messsage, String gonderilenKisi)// mail atan fonksiyon
+        {
+            MailMessage mail = new MailMessage();
+            mail.From = new MailAddress("zimmet.bildirimleri@neroindustry.com");
+            mail.Subject = baslik;
+            mail.IsBodyHtml = true;
+            mail.Body = messsage;
+            mail.To.Add(gonderilenKisi);
+            sc.Send(mail);
+        }
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            sc.Port = 587;
+            sc.Host = "mail.neroindustry.com";
+            sc.EnableSsl = true;
+            sc.Credentials = new NetworkCredential("zimmet.bildirimleri@neroindustry.com", "zimmet.123*");
+ 
+            VeriTabani.SunucuBilgileri();
+            veritabani.baglanti1.Open();
+            string sql2 = "SELECT COUNT(*) FROM user WHERE kapanma_durumu = 0 ";
+            MySqlCommand komut2 = new MySqlCommand(sql2, veritabani.baglanti1);
+            verisayici = Convert.ToInt16(komut2.ExecuteScalar());
+            veritabani.baglanti1.Close();
+ 
+            veritabani.baglanti1.Open();
+ 
+            string sql3 = "SELECT ID,name,email FROM user WHERE kapanma_durumu=0 ORDER BY name";
+ 
+            MySqlCommand komut3 = new MySqlCommand(sql3, veritabani.baglanti1);
+            MySqlDataReader oku3 = komut3.ExecuteReader();
+            combodizi = new string[verisayici];
+ 
+ 
+ 
+            while (oku3.Read())
+            {
+                combodizi[i] = oku3["ID"] + ";" + oku3["name"] + ";" + oku3["email"];
+                ddlKisi.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                ddlAd.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                ddlMailAt.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                i++;
+            }
+            oku3.Close();
+ 
+ 
+            //string alici = combodizi[Convert.ToInt32(comboBox1.SelectedIndex)].Split(';')[2].ToString();
+            veritabani.baglanti1.Close();
+ 
+            VeriTabani.SunucuBilgileri();
+ 
+            veritabani.baglanti1.Open();
+            string sql1 = "SELECT COUNT(*) FROM zimmet_formu_admin_kayit WHERE admin_mi = 0";//userdaki satır sayısını alır kapanma durumu 0 olanlar sadece
+            MySqlCommand komut1 = new MySqlCommand(sql1, veritabani.baglanti1);
+            adminSayici = Convert.ToInt16(komut1.ExecuteScalar());
+            veritabani.baglanti1.Close();
+ 
+            veritabani.baglanti1.Open();
+            string sql = "SELECT id,name,email FROM user INNER JOIN zimmet_formu_admin_kayit ON (zimmet_formu_admin_kayit.userid = user.ID)";
+            MySqlCommand komut = new MySqlCommand(sql, veritabani.baglanti1);
+            MySqlDataReader oku = komut.ExecuteReader();
+            mailDizi = new string[adminSayici];
+ 
+            while (oku.Read())
+            {
+ 
+                mailDizi[a] = oku["ID"] + ";" + oku["name"] + ";" + oku["email"];
+                ddlAdmin.Items.Add(VeriTabani.datagridveriduzelt(mailDizi[a].Split(';')[1].ToString()));
+                a++;
+            }
+            oku.Close();
+ 
+ 
+            veritabani.baglanti1.Close();
+        }
+        string mesaj;
+        string[] yazdir;
+        int k;
+        private void btnMail_Click(object sender, EventArgs e)
+        {
+ 
+        }
+        string[] yazdir2;
+ 
+ 
+        protected void btnMail_Click1(object sender, EventArgs e)
+        {
+            string mailbasligi = "Zimmet";
+            string alici2 = mailDizi[Convert.ToInt32(ddlAdmin.SelectedIndex)].Split(';')[2].ToString();
+            string kisi = combodizi[Convert.ToInt32(ddlKisi.SelectedIndex)].Split(';')[0].ToString();
+            veritabani.baglanti1.Open();
+            string sql4 = "SELECT COUNT(*) FROM zimmet_formu WHERE teslim_alan = '" + kisi + "'";
+            MySqlCommand komut4 = new MySqlCommand(sql4, veritabani.baglanti1);
+            int zimmetsayici = Convert.ToInt16(komut4.ExecuteScalar());
+ 
+            string sql3 = "SELECT id,malzeme_adi,marka_model,seri_no,randomkey FROM zimmet_formu WHERE teslim_alan = '" + kisi + "'";
+            MySqlCommand komut3 = new MySqlCommand(sql3, veritabani.baglanti1);
+            MySqlDataReader oku3 = komut3.ExecuteReader();
+ 
+            yazdir = new string[zimmetsayici];
+            while (oku3.Read())
+            {
+                yazdir[k] = oku3["id"] + ";" + oku3["malzeme_adi"] + ";" + oku3["seri_no"] + ";" + oku3["randomkey"].ToString();
+                k++;
+            }
+            k = 0;
+ 
+            for (int m = 0; m < zimmetsayici; m++)
+            {
+                if (m == 0)
+                {
+                    mesaj += "Sayın " + ddlAdmin.Text + ";" + ddlKisi.Text + "<br/> adına " + zimmetsayici.ToString() + " adet ürün zimmetlidir. Zimmetler aşağıdaki gibidir. " + "<br/>" + yazdir[m].Split(';')[0].ToString() + " zimmet nolu " + VeriTabani.datagridveriduzelt(yazdir[m].Split(';')[1].ToString()) + " malzeme adlı " + yazdir[m].Split(';')[2].ToString() + " seri nolu zimmet kayıtlıdır. Bu zimmete bu link üzerinden erişebilirsiniz : https://qcrm.nerosavunma.com/zimmet_formlari.php?zmno=" + yazdir[m].Split(';')[3].ToString();
+ 
+                }
+ 
+                else
+                {
+ 
+                    mesaj += "<br/>  " + yazdir[m].Split(';')[0].ToString() + " zimmet nolu " + VeriTabani.datagridveriduzelt(yazdir[m].Split(';')[1].ToString()) + " malzeme adlı " + yazdir[m].Split(';')[2].ToString() + " seri nolu zimmet kayıtlıdır. Bu zimmete bu link üzerinden erişebilirsiniz : https://qcrm.nerosavunma.com/zimmet_formlari.php?zmno=" + yazdir[m].Split(';')[3].ToString();
+                }
+            }
+ 
+            if (zimmetsayici == 0)
+            {
+                mesaj += "Sayın " + ddlAdmin.Text + " , " + ddlKisi.Text + " adına ait hiç zimmet bulunmamaktadır";
+            }
+            sendMail(mailbasligi, mesaj, alici2);
+            //MessageBox.Show("Mail başarıyla gönderilmiştir.");
+ 
+            oku3.Close();
+            veritabani.baglanti1.Close();
+        }
+ 
+        protected void btnKayit_Click1(object sender, EventArgs e)
+        {
+            admin = combodizi[ddlAd.SelectedIndex].Split(';')[0].ToString();
+            if (ddlAd.Text == "" || txtKullaniciAdi.Text == "" || txtSifre.Text == "")
+            {
+                //MessageBox.Show("Lütfen boş bırakmayınız");
+                return;
+            }
+            bool kullaniciVarMi2 = VeriTabani.DataBaseAdminKontrol(admin);
+            string sifreli_sifre = VeriTabani.MD5Sifrele(txtSifre.Text);
+            if (kullaniciVarMi2 == true)
+            {
+                //MessageBox.Show("Zaten Kayıtlısınız.");
+ 
+                //Form2 form2 = new Form2();
+                //form2.Show();
+                //this.Hide();
+            }
+            else
+            {
+                VeriTabani.AdminKayit(admin, txtKullaniciAdi.Text, sifreli_sifre);
+            }
+            //MessageBox.Show("Kayıt başarıyla gerçekleştirildi");
+        }
+ 
+        protected void btnMailAt_Click(object sender, EventArgs e)
+        {
+            string mailbasligi = "Zimmet";
+            string alici2 = mailDizi[Convert.ToInt32(ddlAdmin.SelectedIndex)].Split(';')[2].ToString();
+            string kisi = combodizi[Convert.ToInt32(ddlKisi.SelectedIndex)].Split(';')[0].ToString();
+            veritabani.baglanti1.Open();
+            string sql4 = "SELECT COUNT(*) FROM zimmet_formu WHERE teslim_alan = '" + kisi + "'";
+            MySqlCommand komut4 = new MySqlCommand(sql4, veritabani.baglanti1);
+            int zimmetsayici = Convert.ToInt16(komut4.ExecuteScalar());
+ 
+            string sql3 = "SELECT id,malzeme_adi,marka_model,seri_no,randomkey FROM zimmet_formu WHERE teslim_alan = '" + kisi + "'";
+            MySqlCommand komut3 = new MySqlCommand(sql3, veritabani.baglanti1);
+            MySqlDataReader oku3 = komut3.ExecuteReader();
+ 
+            yazdir = new string[zimmetsayici];
+            while (oku3.Read())
+            {
+                yazdir[k] = oku3["id"] + ";" + oku3["malzeme_adi"] + ";" + oku3["seri_no"] + ";" + oku3["randomkey"].ToString();
+                k++;
+            }
+            k = 0;
+ 
+            for (int m = 0; m < zimmetsayici; m++)
+            {
+                if (m == 0)
+                {
+                    mesaj += "Sayın " + ddlAdmin.Text + ";" + ddlKisi.Text + "<br/> adına " + zimmetsayici.ToString() + " adet ürün zimmetlidir. Zimmetler aşağıdaki gibidir. " + "<br/>" + yazdir[m].Split(';')[0].ToString() + " zimmet nolu " + VeriTabani.datagridveriduzelt(yazdir[m].Split(';')[1].ToString()) + " malzeme adlı " + yazdir[m].Split(';')[2].ToString() + " seri nolu zimmet kayıtlıdır. Bu zimmete bu link üzerinden erişebilirsiniz : https://qcrm.nerosavunma.com/zimmet_formlari.php?zmno=" + yazdir[m].Split(';')[3].ToString();
+ 
+                }
+ 
+                else
+                {
+ 
+                    mesaj += "<br/>  " + yazdir[m].Split(';')[0].ToString() + " zimmet nolu " + VeriTabani.datagridveriduzelt(yazdir[m].Split(';')[1].ToString()) + " malzeme adlı " + yazdir[m].Split(';')[2].ToString() + " seri nolu zimmet kayıtlıdır. Bu zimmete bu link üzerinden erişebilirsiniz : https://qcrm.nerosavunma.com/zimmet_formlari.php?zmno=" + yazdir[m].Split(';')[3].ToString();
+                }
+            }
+ 
+            if (zimmetsayici == 0)
+            {
+                mesaj += "Sayın " + ddlAdmin.Text + " , " + ddlKisi.Text + " adına ait hiç zimmet bulunmamaktadır";
+            }
+            sendMail(mailbasligi, mesaj, alici2);
+            //MessageBox.Show("Mail başarıyla gönderilmiştir.");
+ 
+            oku3.Close();
+            veritabani.baglanti1.Close();
+        }
+    }
+}

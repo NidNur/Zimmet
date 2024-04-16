@@ -1,0 +1,126 @@
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+    public partial class gucellemeekrani : System.Web.UI.Page
+    {
+        veritabani VeriTabani = new veritabani();
+        string[] combodizi;
+        int a;
+        int b;
+        int i;
+        protected void Page_Load(object sender, EventArgs e)
+        {           
+                VeriTabani.SunucuBilgileri();
+ 
+                veritabani.baglanti1.Open();
+                string sql1 = "SELECT COUNT(*) FROM user WHERE kapanma_durumu = 0 ";//userdaki satır sayısını alır kapanma durumu 0 olanlar sadece
+                MySqlCommand komut1 = new MySqlCommand(sql1, veritabani.baglanti1);
+                int verisayici = Convert.ToInt16(komut1.ExecuteScalar());
+                veritabani.baglanti1.Close();
+ 
+                veritabani.baglanti1.Open();
+ 
+                string sql = "SELECT ID,name FROM user WHERE kapanma_durumu=0 ORDER BY name";   //comboboxları doldurma    
+ 
+                MySqlCommand komut = new MySqlCommand(sql, veritabani.baglanti1);
+                MySqlDataReader oku = komut.ExecuteReader();
+                combodizi = new string[verisayici];
+ 
+                while (oku.Read())
+                {
+ 
+                    combodizi[i] = oku["ID"] + ";" + oku["name"];
+                    combodizi[i].Split(';').ToString();
+ 
+ 
+                     if (!IsPostBack)
+                     {
+                        cmb_zimmetedilenkisi.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                        cmb_zimmetedenkisi.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                     }
+                    i++;
+ 
+                }
+                oku.Close();
+ 
+ 
+                veritabani.baglanti1.Close();
+ 
+                // birim seçmek için veritabanından birimleri çekme
+                veritabani.baglanti1.Open();
+ 
+                //string sql2 = "SELECT ilgili_birim FROM zimmet_formu";
+                string sql2 = "SELECT ilgili_birim,COUNT(ilgili_birim) FROM zimmet_formu GROUP BY ilgili_birim HAVING COUNT(ilgili_birim ) > 1";
+                MySqlCommand komut2 = new MySqlCommand(sql2, veritabani.baglanti1);
+                MySqlDataReader oku2 = komut2.ExecuteReader();
+                string[] combodizi2 = new string[3000];
+                while (oku2.Read())
+                {
+                    //SELECT sutun, COUNT( sutun ) FROM tablo GROUP BY sutun HAVING COUNT(sutun) > 1
+                    combodizi2[i] = oku2["ilgili_birim"].ToString();
+                if(!IsPostBack)
+                {
+                    cmb_birimadi.Items.Add(VeriTabani.datagridveriduzelt(combodizi2[i].ToString()));
+                }
+                    
+                    i++;
+                }
+                oku2.Close();
+ 
+                veritabani.baglanti1.Close();
+            
+        }
+ 
+        public void btn_ara_Click(object sender, EventArgs e)
+        {
+            var ListeGelen = VeriTabani.NumarayaGoreAramaFonksiyon(txt_urunno.Text);
+            txt_malzemeadi.Text = ListeGelen[1];
+            cmb_birimadi.Text = ListeGelen[0];
+           
+ 
+ 
+            while (a < combodizi.Length)
+            {
+                if (ListeGelen[2] == combodizi[a].Split(';')[0].ToString())
+                {
+                    cmb_zimmetedilenkisi.Text = VeriTabani.datagridveriduzelt(combodizi[a].Split(';')[1].ToString());
+                    a++;
+                }
+                else
+                {
+                    a++;
+                }
+ 
+            }
+ 
+            while (b < combodizi.Length)
+            {
+                if (ListeGelen[3] == combodizi[b].Split(';')[0].ToString())
+                {
+                    cmb_zimmetedenkisi.Text = VeriTabani.datagridveriduzelt(combodizi[b].Split(';')[1].ToString());
+                    b++;
+                }
+                else
+                {
+                    b++;
+                }
+            }
+        }
+ 
+        protected void btn_guncelle_Click(object sender, EventArgs e)
+        {
+            veritabani.baglanti1.Open();
+ 
+            MySqlCommand komut = new MySqlCommand("UPDATE zimmet_formu SET ilgili_birim='" + cmb_birimadi.Text + "',malzeme_adi ='" + txt_malzemeadi.Text +"',teslim_alan ='" + combodizi[cmb_zimmetedilenkisi.SelectedIndex].Split(';')[0].ToString() +"',teslim_eden ='"+ combodizi[cmb_zimmetedenkisi.SelectedIndex].Split(';')[0].ToString() + "' WHERE id=" + txt_urunno.Text , veritabani.baglanti1);
+            komut.ExecuteNonQuery();           
+            veritabani.baglanti1.Close();
+        }
+    }
+}

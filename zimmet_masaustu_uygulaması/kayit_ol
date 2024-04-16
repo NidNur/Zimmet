@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+    public partial class kayitol : System.Web.UI.Page
+    {
+        veritabani VeriTabani = new veritabani();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+ 
+        }
+ 
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            if (txtKullaniciAdi.Text == "" || txtAd.Text == "" || txtSoyad.Text == "" || txtSifre.Text == "")
+            {
+                //MessageBox.Show("Lütfen boş bırakmayınız");
+                return;
+            }
+            bool kullaniciVarMi2 = VeriTabani.DataBaseKullaniciKontrol(txtKullaniciAdi.Text);
+            if (kullaniciVarMi2 == true)
+            {
+                //MessageBox.Show("başka kullanıcı adı");
+ 
+                Response.Redirect("girisekrani.aspx");
+ 
+            }
+            else
+            {
+                VeriTabani.DatabaseKullaniciKayit(txtKullaniciAdi.Text, txtAd.Text, txtSoyad.Text, txtSifre.Text);
+                Response.Redirect("zimmet.aspx");
+            }
+        }
+    }
+}

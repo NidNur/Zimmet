@@ -1,0 +1,98 @@
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+    public partial class eklemeekrani : System.Web.UI.Page
+    {
+        veritabani VeriTabani = new veritabani();
+        sinif2 sinif = new sinif2();
+        int i;
+        string[] combodizi = new string[3000];
+        string urunid;
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            veritabani.dropdownduzelt(DropDownList2);
+            veritabani.dropdownduzelt(DropDownList3);
+ 
+            VeriTabani.SunucuBilgileri();
+ 
+            veritabani.baglanti1.Open();
+            string sql3 = "SELECT id FROM zimmet_formu WHERE malzeme_adi=''&& marka_model='' && resim='' ORDER BY id ASC LIMIT 1";
+            MySqlCommand komut3 = new MySqlCommand(sql3, veritabani.baglanti1);
+            MySqlDataReader oku3 = komut3.ExecuteReader();
+ 
+            while (oku3.Read())
+            {
+                urunid = oku3["id"].ToString();
+                txt_urunnumara.Text = urunid;
+ 
+            }
+ 
+            veritabani.baglanti1.Close();
+ 
+            veritabani.baglanti1.Open();
+            string sql = "SELECT ID,name,email FROM user WHERE kapanma_durumu=0 ORDER BY name";
+            MySqlCommand komut = new MySqlCommand(sql, veritabani.baglanti1);
+            MySqlDataReader oku = komut.ExecuteReader();
+ 
+ 
+            while (oku.Read())
+            {
+ 
+                combodizi[i] = oku["ID"] + ";" + oku["name"] + ";" + oku["email"];
+                combodizi[i].Split(';').ToString();
+ 
+ 
+ 
+                DropDownList2.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                DropDownList3.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+ 
+                i++;
+ 
+            }
+            oku.Close();
+ 
+ 
+            veritabani.baglanti1.Close();
+ 
+            veritabani.baglanti1.Open();
+ 
+            //string sql2 = "SELECT ilgili_birim FROM zimmet_formu";
+            string sql2 = "SELECT ilgili_birim,COUNT(ilgili_birim) FROM zimmet_formu GROUP BY ilgili_birim HAVING COUNT(ilgili_birim ) > 1";
+            MySqlCommand komut2 = new MySqlCommand(sql2, veritabani.baglanti1);
+            MySqlDataReader oku2 = komut2.ExecuteReader();
+            string[] combodizi2 = new string[3000];
+            while (oku2.Read())
+            {
+                //SELECT sutun, COUNT( sutun ) FROM tablo GROUP BY sutun HAVING COUNT(sutun) > 1
+                combodizi2[i] = oku2["ilgili_birim"].ToString();
+                DropDownList1.Items.Add(VeriTabani.datagridveriduzelt(combodizi2[i].ToString()));
+ 
+                i++;
+            }
+            oku2.Close();
+ 
+            veritabani.baglanti1.Close();
+        }
+ 
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            string teslim_alan = combodizi[Convert.ToInt32(DropDownList2.SelectedIndex)].Split(';')[0].ToString();
+            string teslim_eden = combodizi[Convert.ToInt32(DropDownList3.SelectedIndex)].Split(';')[0].ToString();
+ 
+            VeriTabani.SunucuBilgileri();
+ 
+ 
+            veritabani.SatirEklemeFonksiyon(teslim_alan, teslim_eden, txt_malzemeadi.Text, DropDownList1.Text, Convert.ToInt16(txt_urunnumara.Text));
+ 
+ 
+            VeriTabani.VerileriGoster("select id,malzeme_adi,ilgili_birim from zimmet_formu");
+        }
+    }
+}

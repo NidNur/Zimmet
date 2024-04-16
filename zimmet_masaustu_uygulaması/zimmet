@@ -1,0 +1,183 @@
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+ 
+namespace deneme
+{
+ 
+    public partial class zimmet : System.Web.UI.Page
+        {
+            veritabani VeriTabani = new veritabani();
+        sinif2 sinif = new sinif2();
+        Thread t;
+        string[] combodizi;
+        int verisayici;
+        int i;
+        string basilanbuton;
+        public void dataGridDoldur()
+        {
+            VeriTabani.SunucuBilgileri();
+            GridView1.DataSource = VeriTabani.verilerigoster2();
+            GridView1.DataBind();//webe özel gridviewi doldurmayı sağlıyor
+ 
+            veritabani.baglanti1.Open();
+            string sql2 = "SELECT COUNT(*) FROM user WHERE kapanma_durumu = 0 ";
+            MySqlCommand komut2 = new MySqlCommand(sql2, veritabani.baglanti1);
+            verisayici = Convert.ToInt16(komut2.ExecuteScalar());
+            //veritabani.baglanti1.Close();
+            
+           
+ 
+            //veritabani.baglanti1.Open();
+ 
+            string sql3 = "SELECT ID,name,email FROM user WHERE kapanma_durumu=0 ORDER BY name";
+ 
+            MySqlCommand komut3 = new MySqlCommand(sql3, veritabani.baglanti1);
+            MySqlDataReader oku3 = komut3.ExecuteReader();
+            combodizi = new string[verisayici];
+ 
+ 
+ 
+            while (oku3.Read())
+            {
+                combodizi[i] = oku3["ID"] + ";" + oku3["name"] + ";" + oku3["email"];
+                combodizi[i].Split(';').ToString();
+                //cmbMail.Items.Add(veriTabanıClass.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                ddl_arama0.Items.Add(VeriTabani.datagridveriduzelt(combodizi[i].Split(';')[1].ToString()));
+                i++;
+            }
+            oku3.Close();
+ 
+ 
+            //string alici = combodizi[Convert.ToInt32(comboBox1.SelectedIndex)].Split(';')[2].ToString();
+            veritabani.baglanti1.Close();
+        }
+ 
+        public void Page_Load(object sender, EventArgs e)
+        {
+ 
+            if (!IsPostBack)
+            {
+                dataGridDoldur();
+                ddl_arama.Items.Add("Ürün No");
+                ddl_arama.Items.Add("Malzeme Adı");
+                ddl_arama.Items.Add("İlgili Birim");
+                ddl_arama.Items.Add("İsim");
+                ddl_arama0.Visible = false;
+                ddl_arama.SelectedIndex = -1;
+            }
+        }
+ 
+        protected void btn_ekle_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("eklemeekrani.aspx");
+        }
+ 
+        protected void btn_guncelle_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("guncellemeekrani.aspx");
+        }
+ 
+        protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            GridView1.PageIndex = e.NewPageIndex;
+            if(ddl_arama.SelectedIndex==0)
+            {
+                dataGridDoldur();
+            }
+            else if(ddl_arama.SelectedIndex == 1)
+            {
+                VeriTabani.SunucuBilgileri();
+                
+                GridView1.DataSource = VeriTabani.verilerigoster(1, VeriTabani.datagridtersveriduzelt(txt_aradiginiz.Text.ToUpper()));
+                GridView1.DataBind();
+            }
+            else if (ddl_arama.SelectedIndex == 2)
+            {
+                VeriTabani.SunucuBilgileri();
+               
+                GridView1.DataSource = VeriTabani.verilerigoster(1, VeriTabani.datagridtersveriduzelt(txt_aradiginiz.Text.ToUpper()));
+                GridView1.DataBind();
+            }
+            else if (ddl_arama.SelectedIndex == 3)
+            {
+                VeriTabani.SunucuBilgileri();               
+                GridView1.DataSource = VeriTabani.verilerigoster(3, VeriTabani.datagridtersveriduzelt(combodizi[ddl_arama0.SelectedIndex].Split(';')[0].ToString()));
+                GridView1.DataBind();
+            }
+                       
+        }
+ 
+        protected void btn_ara_Click(object sender, EventArgs e)
+        {
+            VeriTabani.VerileriGoster("A");
+           
+ 
+            if ((txt_aradiginiz.Text == "" || ddl_arama0.Text == "") && ddl_arama.Text == "")
+            {
+                Response.Write("Arama kısmını boş bırakmayınız");              
+            }
+ 
+            else if (ddl_arama.SelectedIndex == 0)//numaraya göre arama yapma
+            {
+                basilanbuton = "arama0";
+                
+                GridView1.DataSource = VeriTabani.verilerigoster(0, VeriTabani.datagridtersveriduzelt(txt_aradiginiz.Text.ToUpper()));
+                
+                GridView1.DataBind();
+              
+            }
+            else if (ddl_arama.SelectedIndex == 1)//malzeme adına göre arama yapma
+            {
+ 
+                basilanbuton = "arama1";
+                VeriTabani.SunucuBilgileri();
+                GridView1.DataSource = VeriTabani.verilerigoster(1, VeriTabani.datagridtersveriduzelt(txt_aradiginiz.Text.ToUpper()));
+             
+                GridView1.DataBind();
+              
+ 
+            }
+            else if (ddl_arama.SelectedIndex == 2)//birim adına göre arama yapma
+            {
+ 
+                VeriTabani.SunucuBilgileri();
+                GridView1.DataSource = VeriTabani.verilerigoster(2, VeriTabani.datagridtersveriduzelt(txt_aradiginiz.Text.ToUpper()));
+              
+                GridView1.DataBind();
+                basilanbuton = "arama2";
+              
+            }
+            else if (ddl_arama.SelectedIndex == 3)//isme göre arama yapma
+            {
+                basilanbuton = "arama3";
+                ddl_arama0.Visible = true;
+                txt_aradiginiz.Visible = false;
+                VeriTabani.SunucuBilgileri();
+                GridView1.DataSource = VeriTabani.verilerigoster(3, combodizi[Convert.ToInt16(ddl_arama0.SelectedIndex)].Split(';')[0].ToString());            
+                GridView1.DataBind();
+            }
+        }
+        protected void ddl_arama_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(ddl_arama.SelectedIndex == 3)
+            {
+                txt_aradiginiz.Visible = false;
+                ddl_arama0.Visible = true;
+            }
+            else
+            {
+                txt_aradiginiz.Visible = true;
+                ddl_arama0.Visible = false;
+            }
+        }
+    }
+}
