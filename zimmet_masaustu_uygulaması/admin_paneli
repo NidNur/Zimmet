@@ -13,7 +13,7 @@ namespace deneme
     public partial class adminpaneli : System.Web.UI.Page
     {
         veritabani VeriTabani = new veritabani();
- 
+        int a;
         int i;
         string[] combodizi;
         string[] mailDizi;
@@ -34,10 +34,7 @@ namespace deneme
         }
         protected void Page_Load(object sender, EventArgs e)
         {
-            sc.Port = 587;
-            sc.Host = "mail.neroindustry.com";
-            sc.EnableSsl = true;
-            sc.Credentials = new NetworkCredential("zimmet.bildirimleri@neroindustry.com", "zimmet.123*");
+      
  
             VeriTabani.SunucuBilgileri();
             veritabani.baglanti1.Open();
