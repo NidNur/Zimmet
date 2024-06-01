@@ -13,7 +13,7 @@ namespace deneme
     public partial class adminpaneli : System.Web.UI.Page
     {
         veritabani VeriTabani = new veritabani();
- 
+        int a;
         int i;
         string[] combodizi;
         string[] mailDizi;
